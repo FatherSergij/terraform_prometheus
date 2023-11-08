@@ -1,0 +1,7 @@
+- name: Restart CoreDNS after init workers and install Ingress controller(run in master)
+  block:
+  - name: Need restart CoreDNS for correct work(from pods not work 'curl name_service(example- curl kubernetes.defaults)')
+    shell: kubectl rollout restart deploy coredns -n kube-system
+  become: false
+  #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
+  when: "'ansible_master' in group_names"    

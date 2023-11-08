@@ -1,0 +1,34 @@
+---
+- name: Deploy web page(run in master)
+  block:
+  - name: gg
+    shell: |
+      kubectl create secret generic aws-secret \
+        --namespace kube-system \
+        --from-literal "key_id=AKIA2THLD2F7LP7V2X7R" \
+        --from-literal "access_key=X6ruaeztIwLdXbFHwZO+IsyvYapNs78BZQELU0yd"
+
+#        --from-file=.aws/access_key
+#        --from-file=.aws/key_id \
+       
+
+  - name: dd
+    shell: kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.24"
+
+  - name: Copy files to master from localhost to deploy web page
+    copy:
+      src: helm_chart
+      dest: $HOME
+
+  - name: Generate values.yaml
+    template: 
+      src: values.j2
+      dest: $HOME/helm_chart/values.yaml
+
+  - name: Run deploy and service
+    shell: |
+      cd helm_chart/
+      while ! helm upgrade --install -n my-project --create-namespace test .; do sleep 5; done
+  become: false
+  #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
+  when: "'ansible_master' in group_names"       

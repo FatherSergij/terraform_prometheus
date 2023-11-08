@@ -1,0 +1,32 @@
+---
+- name: Run in workers
+  block:
+  - name: Check init cluster k8s(it run first time and for adding new instance)
+    #if run with become: yes then command is going as root and will be error
+    become: false   
+    shell: kubectl cluster-info
+    register: rc_k8s
+    ignore_errors: true
+
+  - name: Init worker if one not init
+    block:
+    - name: Create directory
+      become: false
+      file:
+        path: $HOME/.kube/
+        state: directory
+        mode: '0755'
+
+    - name: Copy config to workers from localhost for workers 
+      become: false
+      copy:
+        src: config
+        dest: $HOME/.kube/config
+
+    - name: Need run before join workers
+      shell: yes | sudo kubeadm reset
+
+    - name: Init workers(role_path - system variable)
+      script: "{{ role_path }}/files/join_for_workers.sh"       
+    when: rc_k8s.rc == 1  
+  when: "'ansible_workers' in group_names"

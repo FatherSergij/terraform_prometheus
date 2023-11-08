@@ -1,0 +1,84 @@
+---
+- name: Run in master
+  block:
+  - name: Check init cluster k8s
+    #if run with become: yes then command is going as root and will be error
+    become: false   
+    shell: kubectl cluster-info
+    register: rc_k8s
+    ignore_errors: true
+
+  - name: Init k8s if cluster not init
+    block:
+    - name: Initialization cluster k8s on master and extract 2 last line for join workers
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/crio/crio.sock | tail -2
+      register: result
+    
+    - name: Create config for kubelet
+      #if run with become: true(in ansible.cfg) then %HOME will be /root
+      become: false
+      shell: |
+        mkdir -p $HOME/.kube
+        sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+    - name: Print output to file for run one in workers
+      copy:
+        content: "{{ result.stdout }}"
+        dest: "{{ role_path }}/files/join_for_workers.sh" #role_path - system variable
+        mode: '0775'
+      delegate_to: localhost        
+    when: rc_k8s.rc == 1
+
+  - name: Create token k8s if cluster init already
+    block:
+    - name: Create token for workers
+      shell: kubeadm token create --print-join-command
+      register: result
+
+    - name: Print output to file for run one in workers
+      copy:
+        content: "{{ result.stdout }}"
+        dest: "{{ role_path }}/files/join_for_workers.sh" #role_path - system variable
+        mode: '0775'
+      delegate_to: localhost            
+    when: rc_k8s.rc == 0
+
+  - name: Copy config from master to localhost for workers
+    become: false
+    fetch:
+      src: $HOME/.kube/config
+      dest: "{{ role_path }}/files/config"
+      flat: yes
+
+  - name: Install podman
+    shell: |
+      apt-get update && sudo apt-get -y upgrade
+      apt-get -y install podman
+    ignore_errors: true
+
+#-----------------------------
+  - name: Copy file with password of DockerHub to master from localhost
+    become: false
+    copy:
+      src: .aws/dockerhub.txt
+      dest: $HOME/    
+
+  - name: Login to DockerHub
+    shell: cat dockerhub.txt | podman login --username fatherfedor --password-stdin      
+#-----------------------------
+
+  - name: Install Helm (sudo apt-get install apt-transport-https - not run because it ran in install.yml)
+    shell: |
+      curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+      apt-get update
+      apt-get -y install helm  
+
+  - name: Install Calico
+    become: false
+    shell: |
+      helm repo add projectcalico https://docs.tigera.io/calico/charts
+      helm repo update
+      helm upgrade --install calico projectcalico/tigera-operator --version v3.26.3 --namespace tigera-operator --create-namespace 
+  when: "'ansible_master' in group_names"         

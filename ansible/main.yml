@@ -1,0 +1,8 @@
+---
+- name: create claster k8s
+  hosts: all
+  become: yes
+  #become=yes - all will run as root
+
+  roles:
+    - role_k8s_deploy
