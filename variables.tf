@@ -2,10 +2,6 @@ variable "region" {
   default = "eu-north-1"
 }
 
-//variable "region_s3" {
-//  default = "eu-central-1"
-//}
-
 variable "vpc_cidr" {
   default = "10.1.0.0/16"
 }

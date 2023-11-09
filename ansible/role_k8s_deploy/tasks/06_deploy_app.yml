@@ -1,18 +1,17 @@
 ---
 - name: Deploy web page(run in master)
   block:
-  - name: gg
+  - name: Create secret for Amazon Elastic Block Store (EBS) CSI driver
     shell: |
+      key=sed -r '2!d;s/.*=//' .aws/credentials
+      access_key=sed -r '3!d;s/.*=//' .aws/credentials
       kubectl create secret generic aws-secret \
         --namespace kube-system \
-        --from-literal "key_id=AKIA2THLD2F7LP7V2X7R" \
-        --from-literal "access_key=X6ruaeztIwLdXbFHwZO+IsyvYapNs78BZQELU0yd"
+        --from-literal "key_id=${key}" \
+        --from-literal "access_key=${access_key}"
+    #sed - take 2 and 3 line and delete everything before "=" including "="
 
-#        --from-file=.aws/access_key
-#        --from-file=.aws/key_id \
-       
-
-  - name: dd
+  - name: Install Amazon Elastic Block Store (EBS) CSI driver
     shell: kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.24"
 
   - name: Copy files to master from localhost to deploy web page

@@ -67,3 +67,32 @@ resource "null_resource" "instance_deploy" {
     command = "cd ansible/ && ansible-playbook -e 'region_from_terraform'=${var.region} -e 'domain_from_terraform'=${var.domain} -e 'aws_user_id_from_terraform'=${var.aws_user_id} -e 'number_replicas_from_terraform'=${var.number_replicas} main.yml"
   } 
 }
+
+resource "null_resource" "destroy" {
+  #triggers = {
+  #  timestamp = timestamp() //for ansible-playbook to to run always
+  #  master_ip = module.deploy_instances.master_ip
+  #  user_name = local.user_name
+    #file_key = file("${var.path_for_ansible}key.pem")   
+  #}
+  count = 1
+  connection {
+    host        = module.deploy_instances.master_ip
+    type        = "ssh"
+    user        = local.user_name
+    private_key = file(module.deploy_instances.path_key_file)
+  }
+
+  provisioner "remote-exec" {
+    when = destroy
+    #inline = ["aws ec2 delete-volume --volume-id $(kubectl get pv `kubectl get pv -n my-project -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'` -n my-project -o jsonpath='{.spec.csi.volumeHandle}') --region eu-north-1"]
+    inline = ["helm  uninstall test -n my-project"]
+#    connection {
+#      host        = self.triggers.master_ip
+#      type        = "ssh"
+#      user        = self.triggers.user_name
+#      private_key = file(module.deploy_instances.path_key_file)#self.triggers.file_key
+#    } 
+    #on_failure = continue   
+  }
+}

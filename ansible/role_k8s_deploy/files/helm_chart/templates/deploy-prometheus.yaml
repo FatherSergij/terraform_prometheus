@@ -20,15 +20,22 @@ spec:
         volumeMounts:
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/prometheus.yml
-            #subPath: prometheus.yml
-          - name: prometheus-data-volume
+            subPath: prometheus.yml
+          - name: prometheus-data
             mountPath: /prometheus
         ports:
         - containerPort: 9090
+      initContainers:
+        - name: prometheus-data-permission-fix
+          image: busybox
+          command: ["/bin/chmod","-R","777", "/prometheus"]
+          volumeMounts:
+          - name: prometheus-data
+            mountPath: /prometheus      
       volumes:
         - name: prometheus-config-volume
           configMap:
             name: prometheus-config     
-        - name: prometheus-data-volume
+        - name: prometheus-data
           persistentVolumeClaim:
             claimName: pvc-prometheus-data      
