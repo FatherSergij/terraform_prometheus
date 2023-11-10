@@ -1,10 +1,4 @@
 ---
-- name: Copy key for instance for resource "null_resource" "destroy" of Terraform
-  copy:
-    src: "{{ playbook_dir }}/key.pem"
-    dest: "{{ playbook_dir }}/key_destroy.pem"
-  delegate_to: localhost 
-
 - name: Check CRIO installed
   shell: dpkg -s cri-o
   register: rc_crio

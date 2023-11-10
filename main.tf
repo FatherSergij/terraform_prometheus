@@ -69,30 +69,26 @@ resource "null_resource" "instance_deploy" {
 }
 
 resource "null_resource" "destroy" {
-  #triggers = {
-  #  timestamp = timestamp() //for ansible-playbook to to run always
-  #  master_ip = module.deploy_instances.master_ip
-  #  user_name = local.user_name
-    #file_key = file("${var.path_for_ansible}key.pem")   
-  #}
-  count = 1
-  connection {
-    host        = module.deploy_instances.master_ip
-    type        = "ssh"
-    user        = local.user_name
-    private_key = file(module.deploy_instances.path_key_file)
+  triggers = {
+    master_ip = module.deploy_instances.master_ip
+    user_name = local.user_name
+    file_key = "${module.deploy_instances.key}"#Need do not through file but get value of key, otherwise will be error because file hasn't created yet
   }
 
   provisioner "remote-exec" {
     when = destroy
     #inline = ["aws ec2 delete-volume --volume-id $(kubectl get pv `kubectl get pv -n my-project -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'` -n my-project -o jsonpath='{.spec.csi.volumeHandle}') --region eu-north-1"]
-    inline = ["helm  uninstall test -n my-project"]
-#    connection {
-#      host        = self.triggers.master_ip
-#      type        = "ssh"
-#      user        = self.triggers.user_name
-#      private_key = file(module.deploy_instances.path_key_file)#self.triggers.file_key
-#    } 
-    #on_failure = continue   
+    inline = [
+      #"helm uninstall prometheus -n monitoring"
+      "id=$(aws ec2 describe-volumes --filters 'Name=tag:pv,Values=prometheus' --query 'Volumes[*].VolumeId' --output text --region eu-north-1)",
+      "aws ec2 delete-volume --volume-id $id --region eu-north-1"
+    ]
+    connection {
+      host        = self.triggers.master_ip
+      type        = "ssh"
+      user        = self.triggers.user_name
+      private_key = self.triggers.file_key
+    } 
+    on_failure = continue   
   }
 }

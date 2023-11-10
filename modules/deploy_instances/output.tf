@@ -17,3 +17,7 @@ output "path_key_file" {
 output "user_from_ami" {
   value = data.aws_ami.ami_latest.name
 }
+
+output "key" {
+  value = tls_private_key.private_key.private_key_pem
+}

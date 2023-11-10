@@ -3,8 +3,8 @@
   block:
   - name: Create secret for Amazon Elastic Block Store (EBS) CSI driver
     shell: |
-      key=sed -r '2!d;s/.*=//' .aws/credentials
-      access_key=sed -r '3!d;s/.*=//' .aws/credentials
+      key=$(sed -r '2!d;s/.*=//' .aws/credentials)
+      access_key=$(sed -r '3!d;s/.*=//' .aws/credentials)
       kubectl create secret generic aws-secret \
         --namespace kube-system \
         --from-literal "key_id=${key}" \
@@ -27,7 +27,7 @@
   - name: Run deploy and service
     shell: |
       cd helm_chart/
-      while ! helm upgrade --install -n my-project --create-namespace test .; do sleep 5; done
+      while ! helm upgrade --install -n monitoring --create-namespace prometheus .; do sleep 5; done
   become: false
   #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
   when: "'ansible_master' in group_names"       
