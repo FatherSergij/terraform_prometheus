@@ -1,5 +1,5 @@
 output "master_ip" {
-  value = aws_eip.eip_master.public_ip//"16.170.31.179"
+  value = aws_eip.eip_master.public_ip
 }
 
 output "workers_ip" {

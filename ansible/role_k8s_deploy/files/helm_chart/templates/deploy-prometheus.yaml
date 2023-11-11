@@ -25,7 +25,7 @@ spec:
             mountPath: /prometheus
         ports:
         - containerPort: 9090
-      initContainers:
+      initContainers: #without this there will be error - prometheus panic: Unable to create mmap-ed active query log and pod didn't create
         - name: prometheus-data-permission-fix
           image: busybox
           command: ["/bin/chmod","-R","777", "/prometheus"]

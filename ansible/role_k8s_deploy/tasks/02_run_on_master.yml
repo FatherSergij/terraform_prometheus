@@ -58,14 +58,14 @@
     ignore_errors: true
 
 #-----------------------------
-  - name: Copy file with password of DockerHub to master from localhost
-    become: false
-    copy:
-      src: .aws/dockerhub.txt
-      dest: $HOME/    
-
-  - name: Login to DockerHub
-    shell: cat dockerhub.txt | podman login --username fatherfedor --password-stdin      
+ # - name: Copy file with password of DockerHub to master from localhost
+ #   become: false
+ #   copy:
+ #     src: .aws/dockerhub.txt
+ #     dest: $HOME/    
+#
+ # - name: Login to DockerHub
+ #   shell: cat dockerhub.txt | podman login --username fatherfedor --password-stdin      
 #-----------------------------
 
   - name: Install Helm (sudo apt-get install apt-transport-https - not run because it ran in install.yml)
