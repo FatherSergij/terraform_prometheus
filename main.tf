@@ -68,45 +68,26 @@ resource "null_resource" "instance_deploy" {
   } 
 }
 
-#resource "time_sleep" "wait_30_seconds" {
+#resource "null_resource" "destroy" {
 #  depends_on = [module.deploy_instances]
+#  triggers = {
+#    master_ip = module.deploy_instances.master_ip
+#    user_name = local.user_name
+#    file_key = "${module.deploy_instances.key}"#################Need do not through file but get value of key, otherwise will be error because file hasn't created yet
+#  }
 #
-#  destroy_duration = "60s"
+#  provisioner "remote-exec" {
+#    when = destroy
+#    #inline = ["aws ec2 delete-volume --volume-id $(kubectl get pv `kubectl get pv -n my-project -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'` -n my-project -o jsonpath='{.spec.csi.volumeHandle}') --region eu-north-1"]
+#    inline = [
+#      "echo Startingdelete",
+#    ]
+#    connection {
+#      host        = self.triggers.master_ip
+#      type        = "ssh"
+#      user        = self.triggers.user_name
+#      private_key = self.triggers.file_key
+#    } 
+#    on_failure = continue   
+#  }
 #}
-
-resource "null_resource" "destroy" {
-  depends_on = [module.deploy_instances]
-  #depends_on = [time_sleep.wait_30_seconds]
-  triggers = {
-    master_ip = module.deploy_instances.master_ip
-    user_name = local.user_name
-    file_key = "${module.deploy_instances.key}"#Need do not through file but get value of key, otherwise will be error because file hasn't created yet
-  }
-
-  #id=$(aws ec2 describe-volumes --filters "Name=tag:pv,Values=prometheus" --query 'Volumes[0].Attachments[0].InstanceId' --output text --region eu-north-1)
-  #device=$(aws ec2 describe-volumes --filters "Name=tag:pv,Values=prometheus" --query 'Volumes[0].Attachments[0].Device' --output text --region eu-north-1)
-  #aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region eu-north-1
-
-  provisioner "remote-exec" {
-    when = destroy
-    #inline = ["aws ec2 delete-volume --volume-id $(kubectl get pv `kubectl get pv -n my-project -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'` -n my-project -o jsonpath='{.spec.csi.volumeHandle}') --region eu-north-1"]
-    inline = [ #"./.aws/del.sh"
-      "echo Startingdelete",
-      "helm uninstall prometheus -n monitoring"
-#      "id=$(aws ec2 describe-volumes --filters 'Name=tag:pv,Values=prometheus' --query 'Volumes[*].VolumeId' --output text --region eu-north-1)",
-#      "echo $id",
-#      "echo describe",
-#      "aws ec2 detach-volume --force --volume-id $id --region eu-north-1",
-#      "echo detach",
-#      "while ! aws ec2 delete-volume --volume-id $id --region eu-north-1; do sleep 3; done",
-#      "echo Complete"
-    ]
-    connection {
-      host        = self.triggers.master_ip
-      type        = "ssh"
-      user        = self.triggers.user_name
-      private_key = self.triggers.file_key
-    } 
-    on_failure = continue   
-  }
-}
