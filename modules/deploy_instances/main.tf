@@ -38,6 +38,7 @@ resource "aws_iam_role_policy_attachment" "attach_policy_master_role_master" {
   policy_arn = aws_iam_policy.policy_master.arn
 }
 
+#for EBS CSI driver for mounting volume of Prometheus
 resource "aws_iam_role_policy_attachment" "attach_policy_ebs_role_master" {
   role       = aws_iam_role.role_master.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
@@ -72,6 +73,7 @@ resource "aws_iam_role_policy_attachment" "attach_policy_worker_role_worker" {
   policy_arn = aws_iam_policy.policy_worker.arn
 }
 
+#for EBS CSI driver for mounting volume of Prometheus
 resource "aws_iam_role_policy_attachment" "attach_policy_ebs_role_worker" {
   role       = aws_iam_role.role_worker.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"

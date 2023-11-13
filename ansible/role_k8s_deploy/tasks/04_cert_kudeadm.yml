@@ -1,0 +1,9 @@
+#Certificate Management with kubeadm/Enabling signed kubelet serving certificates(https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs)
+---
+- name: For Prometheus #else will be error in Targets - tls: failed to verify certificate: x509: cannot validate certificate for X.X.X.X because it doesn't contain any IP SANs
+  lineinfile:
+    path: /var/lib/kubelet/config.yaml
+    line: 'serverTLSBootstrap: true'
+
+- name: For command above
+  shell: systemctl restart kubelet

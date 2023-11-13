@@ -31,13 +31,20 @@
 
   - name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
     shell: |
-      id=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region {{ region_from_terraform }})
-      device=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region {{ region_from_terraform }})
-      aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region {{ region_from_terraform }}
+      while ! aws ec2 modify-instance-attribute --instance-id $(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region eu-north-1) --block-device-mappings "[{\"DeviceName\": \"$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region eu-north-1)\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region  eu-north-1; do sleep 5; done
+
+  - name: Approve CSRs(see 04_cert_kudeadm.yml)
+    shell: for csr_name in $(kubectl get csr | grep -i pending | awk '{print $1}'); do kubectl certificate approve $csr_name; done
+
+  #- name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
+  #  shell: |
+  #    id=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region {{ region_from_terraform }})
+  #    device=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region {{ region_from_terraform }})
+  #    while ! aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region {{ region_from_terraform }}; do sleep 5; done
 
     #id=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region eu-north-1)
     #device=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region eu-north-1)
-    #aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region  eu-north-1
+    #aws while ! ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region  eu-north-1; do sleep 5; done
 
   become: false
   #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  

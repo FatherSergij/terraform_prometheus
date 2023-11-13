@@ -1,8 +1,9 @@
 ---
 # tasks file for k8s_deploy
 - import_tasks: 01_install.yml
-- import_tasks: 02_run_on_master.yml
-- import_tasks: 03_run_on_workers.yml
-- import_tasks: 04_coredns_ingress_controller.yml
-- import_tasks: 05_build_image.yml
-- import_tasks: 06_deploy_app.yml
+- import_tasks: 02_init_master.yml
+- import_tasks: 03_init_workers.yml
+- import_tasks: 04_cert_kudeadm.yml
+- import_tasks: 05_coredns_ingress_controller.yml
+- import_tasks: 06_build_image.yml
+- import_tasks: 07_deploy_app.yml
