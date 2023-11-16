@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-prometheus-data
+spec:
+  storageClassName: storage-ebs
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -14,4 +26,4 @@ parameters:
 #- matchLabelExpressions:
 #  - key: topology.kubernetes.io/zone
 #    values:
-#    - eu-north-1
+#    - eu-north-1      

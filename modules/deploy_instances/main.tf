@@ -11,7 +11,7 @@ data "aws_ami" "ami_latest" {
   }
   filter {
     name   = "name"
-    values = ["ubuntu/images/*20.04*"]
+    values = ["ubuntu/images/*22.04*"]
   }
 }
 
@@ -39,10 +39,10 @@ resource "aws_iam_role_policy_attachment" "attach_policy_master_role_master" {
 }
 
 #for EBS CSI driver for mounting volume of Prometheus
-resource "aws_iam_role_policy_attachment" "attach_policy_ebs_role_master" {
-  role       = aws_iam_role.role_master.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-}
+#resource "aws_iam_role_policy_attachment" "attach_policy_ebs_role_master" {
+#  role       = aws_iam_role.role_master.name
+#  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+#}
 
 resource "aws_iam_instance_profile" "master_profile" {
   name = "master_profile"
@@ -74,10 +74,10 @@ resource "aws_iam_role_policy_attachment" "attach_policy_worker_role_worker" {
 }
 
 #for EBS CSI driver for mounting volume of Prometheus
-resource "aws_iam_role_policy_attachment" "attach_policy_ebs_role_worker" {
-  role       = aws_iam_role.role_worker.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-}
+#resource "aws_iam_role_policy_attachment" "attach_policy_ebs_role_worker" {
+#  role       = aws_iam_role.role_worker.name
+#  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+#}
 
 resource "aws_iam_instance_profile" "worker_profile" {
   name = "worker_profile"
@@ -159,7 +159,7 @@ resource "aws_instance" "instance_master" {
 
 resource "aws_instance" "instance_workers" {
   count                  = var.nm_worker
-  ami                    = "ami-0989fb15ce71ba39e"
+  ami                    = data.aws_ami.ami_latest.id//"ami-0989fb15ce71ba39e"
   instance_type          = var.instance_type_worker
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [aws_security_group.sg.id]

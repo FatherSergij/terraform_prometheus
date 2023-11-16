@@ -3,6 +3,7 @@
   block:
   - name: Create secret for Amazon Elastic Block Store (EBS) CSI driver
     shell: |
+      kubectl delete secret aws-secret --namespace kube-system
       key=$(sed -r '2!d;s/.*=//' .aws/credentials)
       access_key=$(sed -r '3!d;s/.*=//' .aws/credentials)
       kubectl create secret generic aws-secret \
@@ -14,7 +15,7 @@
   - name: Install Amazon Elastic Block Store (EBS) CSI driver
     shell: kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.24"
 
-  - name: Copy files to master from localhost to deploy web page
+  - name: Copy files to master from localhost to deploy Prometheus
     copy:
       src: helm_chart
       dest: $HOME
@@ -24,28 +25,36 @@
       src: values.j2
       dest: $HOME/helm_chart/values.yaml
 
-  - name: Run deploy and service
+  - name: Run prometheus and exporters
     shell: |
       cd helm_chart/
       while ! helm upgrade --install -n monitoring --create-namespace prometheus .; do sleep 5; done
+      helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      helm repo update
+      helm upgrade --install kube-state-metrics prometheus-community/kube-state-metrics
+#      kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
   - name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
     shell: |
-      while ! aws ec2 modify-instance-attribute --instance-id $(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region eu-north-1) --block-device-mappings "[{\"DeviceName\": \"$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region eu-north-1)\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region  eu-north-1; do sleep 5; done
+      while ! aws ec2 modify-instance-attribute --instance-id \
+        $(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region {{ region_from_terraform }}) \
+        --block-device-mappings "[{\"DeviceName\": \
+        \"$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region {{ region_from_terraform }})\",\
+        \"Ebs\":{\"DeleteOnTermination\":true}}]" --region {{ region_from_terraform }}; do sleep 5; done
+    #id=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region eu-north-1)
+    #device=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region eu-north-1)
+    #aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region eu-north-1; do sleep 5; done
 
   - name: Approve CSRs(see 04_cert_kudeadm.yml)
     shell: for csr_name in $(kubectl get csr | grep -i pending | awk '{print $1}'); do kubectl certificate approve $csr_name; done
 
-  #- name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
-  #  shell: |
-  #    id=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region {{ region_from_terraform }})
-  #    device=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region {{ region_from_terraform }})
-  #    while ! aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region {{ region_from_terraform }}; do sleep 5; done
-
-    #id=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region eu-north-1)
-    #device=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region eu-north-1)
-    #aws while ! ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region  eu-north-1; do sleep 5; done
-
   become: false
   #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
-  when: "'ansible_master' in group_names"       
+  when: "'ansible_master' in group_names" 
+
+- name: Run in workers
+  block:
+  - name: ff
+    shell: curl -X POST localhost:9090/-/reload
+    #pgrep prometheus | kill -HUP
+  when: "'ansible_workers' in group_names"      
