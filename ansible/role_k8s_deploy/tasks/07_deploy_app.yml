@@ -31,7 +31,7 @@
       while ! helm upgrade --install -n monitoring --create-namespace prometheus .; do sleep 5; done
       helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
       helm repo update
-      helm upgrade --install kube-state-metrics prometheus-community/kube-state-metrics
+     # helm upgrade --install -n monitoring kube-state-metrics prometheus-community/kube-state-metrics
 #      kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
   - name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
@@ -43,9 +43,9 @@
         \"Ebs\":{\"DeleteOnTermination\":true}}]" --region {{ region_from_terraform }}; do sleep 5; done
     #id=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region eu-north-1)
     #device=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region eu-north-1)
-    #aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region eu-north-1; do sleep 5; done
+    #aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region eu-north-1
 
-  - name: Approve CSRs(see 04_cert_kudeadm.yml)
+  - name: Approve CSRs(to see 04_cert_kudeadm.yml)
     shell: for csr_name in $(kubectl get csr | grep -i pending | awk '{print $1}'); do kubectl certificate approve $csr_name; done
 
   become: false
@@ -55,6 +55,10 @@
 - name: Run in workers
   block:
   - name: ff
-    shell: curl -X POST localhost:9090/-/reload
+    shell: while ! curl -X POST localhost:9090/-/reload; do sleep 5; done
     #pgrep prometheus | kill -HUP
   when: "'ansible_workers' in group_names"      
+
+          #dns_sd_configs:
+          #- names:
+          #  - 'kube-dns.kube-system.svc'

@@ -33,15 +33,17 @@ spec:
       containers:
       - name: prometheus-server
         image: prom/prometheus
-        command: ["--web.enable-lifecycle"]
+        ports:
+          - containerPort: 9090
+        args: 
+          - --config.file=/etc/prometheus/prometheus.yml
+          - --web.enable-lifecycle
         volumeMounts:
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/prometheus.yml
             subPath: prometheus.yml
           - name: prometheus-data
             mountPath: /prometheus
-        ports:
-        - containerPort: 9090
       initContainers: #without this there will be error - prometheus panic: Unable to create mmap-ed active query log and pod didn't create
         - name: prometheus-data-permission-fix
           image: busybox

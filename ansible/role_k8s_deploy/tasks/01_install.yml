@@ -36,6 +36,9 @@
       apt-get update
       apt-get install -y software-properties-common curl
 
+  - name: Install packages needed to use k8s repository
+    shell: apt-get install -y apt-transport-https ca-certificates      
+
   - name: Add repository k8s
     shell: |
       mkdir -p /etc/apt/keyrings
