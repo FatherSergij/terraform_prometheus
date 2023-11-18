@@ -15,6 +15,7 @@ spec:
     - port: 9093
       targetPort: 9093
 ---
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: alertmanager
@@ -42,8 +43,8 @@ spec:
         volumeMounts:
         - name: config-volume
           mountPath: /etc/alertmanager
-        - name: templates-volume
-          mountPath: /etc/alertmanager-templates
+      #  - name: templates-volume
+      #    mountPath: /etc/alertmanager-templates
         - name: alertmanager
           mountPath: /alertmanager
       volumes:
@@ -54,8 +55,8 @@ spec:
           - key: secret-key
             path: secret-key
             mode: 0444          
-      - name: templates-volume
-        configMap:
-          name: alertmanager-templates
+     # - name: templates-volume
+      #  configMap:
+      #    name: alertmanager-templates
       - name: alertmanager
         emptyDir: {}
