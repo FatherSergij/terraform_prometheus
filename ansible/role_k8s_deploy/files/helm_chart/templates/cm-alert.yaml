@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+data:
+  config.yml: |
+    global:
+    route:
+      receiver: alert-emailer
+      group_by: ['alertname', 'priority']
+      group_wait: 10s
+      repeat_interval: 30m
+      routes:
+        - receiver: slack_demo
+        # Send severity=slack alerts to slack.
+          match:
+            severity: slack
+          group_wait: 10s
+          repeat_interval: 1m
+ 
+    receivers:
+    - name: gmail
+      email_configs:
+      - to: fatherfedor13@gmail.com
+        from: alertmanager777@gmail.com
+        smarthost: smtp.gmail.com:587
+        auth_username: alertmanager777@gmail.com
+        auth_identity: alertmanager777@gmail.com
+        auth_password: secret-key
+#    - name: slack_demo
+#      slack_configs:
+#      - api_url: https://hooks.slack.com/services/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sz4Qk
+#        channel: '#devopscube-demo'

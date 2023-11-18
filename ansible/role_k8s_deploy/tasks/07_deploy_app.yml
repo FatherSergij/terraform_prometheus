@@ -31,7 +31,7 @@
       while ! helm upgrade --install -n monitoring --create-namespace prometheus .; do sleep 5; done
       helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
       helm repo update
-     # helm upgrade --install -n monitoring kube-state-metrics prometheus-community/kube-state-metrics
+      helm upgrade --install -n monitoring kube-state-metrics prometheus-community/kube-state-metrics
 #      kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
   - name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy

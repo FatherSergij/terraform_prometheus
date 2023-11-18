@@ -29,6 +29,7 @@ spec:
         app: prometheus
     spec:
       hostNetwork: true ####so that you can to go a browser at the address - ip_worker:9090
+      dnsPolicy: "ClusterFirstWithHostNet" # It should be used for pods running with hostNetwork: true. This way it will use cluster DNS and will be in host network.
       serviceAccountName: prometheus
       containers:
       - name: prometheus-server
@@ -37,11 +38,14 @@ spec:
           - containerPort: 9090
         args: 
           - --config.file=/etc/prometheus/prometheus.yml
+          - --storage.tsdb.path=/prometheus
           - --web.enable-lifecycle
         volumeMounts:
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/prometheus.yml
             subPath: prometheus.yml
+          - name: rules-volume
+            mountPath: /etc/prometheus/rules
           - name: prometheus-data
             mountPath: /prometheus
       initContainers: #without this there will be error - prometheus panic: Unable to create mmap-ed active query log and pod didn't create
@@ -54,7 +58,10 @@ spec:
       volumes:
         - name: prometheus-config-volume
           configMap:
-            name: prometheus-config     
+            name: prometheus-config  
+        - name: rules-volume
+          configMap:
+            name: prometheus-rules   
         - name: prometheus-data
           persistentVolumeClaim:
             claimName: pvc-prometheus-data    
