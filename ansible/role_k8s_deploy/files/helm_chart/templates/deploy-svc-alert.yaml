@@ -51,10 +51,6 @@ spec:
       - name: config-volume
         configMap:
           name: alertmanager-config
-        items:
-          - key: secret-key
-            path: secret-key
-            mode: 0444          
      # - name: templates-volume
       #  configMap:
       #    name: alertmanager-templates

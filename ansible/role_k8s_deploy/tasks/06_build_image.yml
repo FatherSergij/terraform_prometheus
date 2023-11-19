@@ -1,9 +1,9 @@
 - name: Build and push in ECR(AWS) image(run in master)
   block:
-  - name: Copy AWS credentials to master
-    copy:
-      src: .aws/
-      dest: ~/.aws/
+  #- name: Copy AWS credentials to master
+  #  copy:
+  #    src: .aws/
+  #    dest: ~/.aws/
 
   - name: Install AWS CLI
     become: true
@@ -12,6 +12,7 @@
   - name: To log in to an Amazon ECR registry
     shell: aws ecr get-login-password --region {{ region_from_terraform }} | podman login --username AWS \
             --password-stdin {{ aws_user_id_from_terraform }}.dkr.ecr.{{ region_from_terraform }}.amazonaws.com
+    #need .aws/credentials(02_init_master.yml)
   become: false
   #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
   when: "'ansible_master' in group_names"            

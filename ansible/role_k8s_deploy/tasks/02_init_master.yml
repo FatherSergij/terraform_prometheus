@@ -1,6 +1,15 @@
 ---
 - name: Run in master
   block:
+  - name: Copy AWS credentials, key and secret of GoDaddy, password to email for alertmanager to master
+    become: false 
+    copy:
+      src: .{{item}}
+      dest: ~/
+    with_items:
+      ['.aws','.godaddy','.email']      
+    ignore_errors: true
+
   - name: Check init cluster k8s
     #if run with become: yes then command is going as root and will be error
     become: false   
@@ -58,13 +67,14 @@
     ignore_errors: true
 
 #-----------------------------
-  - name: Copy file with password of DockerHub to master from localhost
-    become: false
-    copy:
-      src: .aws/dockerhub.txt
-      dest: $HOME/    
+  #- name: Copy file with password of DockerHub to master from localhost
+  #  become: false
+  #  copy:
+  #    src: .aws/dockerhub.txt
+  #    dest: $HOME/    
   - name: Login to DockerHub
-    shell: cat dockerhub.txt | podman login --username fatherfedor --password-stdin      
+    shell: cat dockerhub.txt | podman login --username fatherfedor --password-stdin 
+    #need .aws/dockerhub.txt(02_init_master.yml)     
 #-----------------------------
 
   - name: Install Helm (sudo apt-get install apt-transport-https - not run because it ran in install.yml)
