@@ -13,10 +13,6 @@
     #sed - take 2 and 3 line and delete everything before "=" including "="
     #need .aws/credentials(02_init_master.yml)
 
-  - name: Change secret-key in cm-alert.yaml for email
-    shell: sed -ie "s/secret-key/$(sed '1!d' \.email\/secret-key.txt)/" helm_chart/templates/cm-alert.yaml
-    #need .email/secret-key.txt(02_init_master.yml)
-
   - name: Install Amazon Elastic Block Store (EBS) CSI driver
     shell: kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.24"
 
@@ -24,6 +20,10 @@
     copy:
       src: helm_chart
       dest: $HOME
+
+  - name: Change secret-key in cm-alert.yaml for email
+    shell: sed -ie "s/secret-key/$(sed '1!d' \.email\/secret-key.txt)/" helm_chart/templates/cm-alert.yaml
+    #need .email/secret-key.txt(02_init_master.yml)
 
   - name: Generate values.yaml
     template: 

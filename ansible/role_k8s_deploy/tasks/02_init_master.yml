@@ -1,10 +1,10 @@
 ---
 - name: Run in master
   block:
-  - name: Copy AWS credentials, key and secret of GoDaddy, password to email for alertmanager to master
+  - name: Copy some directories - AWS credentials, key and secret of GoDaddy, App passwords of Google Account for alertmanager to master
     become: false 
     copy:
-      src: .{{item}}
+      src: "{{item}}"
       dest: ~/
     with_items:
       ['.aws','.godaddy','.email']      
@@ -74,6 +74,7 @@
   #    dest: $HOME/    
   - name: Login to DockerHub
     shell: cat dockerhub.txt | podman login --username fatherfedor --password-stdin 
+    ignore_errors: true
     #need .aws/dockerhub.txt(02_init_master.yml)     
 #-----------------------------
 
