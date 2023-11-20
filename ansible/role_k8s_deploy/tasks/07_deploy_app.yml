@@ -22,7 +22,7 @@
       dest: $HOME
 
   - name: Change secret-key in cm-alert.yaml for email
-    shell: sed -ie "s/secret-key/$(sed '1!d' \.email\/secret-key.txt)/" helm_chart/templates/cm-alert.yaml
+    shell: sed -i "s/secret-key/$(sed '1!d' \.email\/secret-key.txt)/" helm_chart/templates/cm-alert.yaml
     #need .email/secret-key.txt(02_init_master.yml)
 
   - name: Generate values.yaml

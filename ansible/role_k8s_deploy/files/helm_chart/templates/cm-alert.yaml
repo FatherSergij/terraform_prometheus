@@ -20,6 +20,11 @@ data:
         auth_username: alertmanager777@gmail.com
         auth_identity: alertmanager777@gmail.com
         auth_password: secret-key
+    
+    - name: telegram
+      telegram_configs:
+       - chat_id: "ID вашего чата без кавычек"
+         bot_token: "Ваш токен без кавычек"    
 
 #      routes:
 #        - receiver: slack_demo
