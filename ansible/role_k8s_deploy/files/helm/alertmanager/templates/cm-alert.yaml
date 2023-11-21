@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+data:
+  config.yml: |
+    global:
+    route:
+      receiver: gmail
+      group_by: [alertname, job]
+      group_wait: 10s
+      repeat_interval: 5m
+      routes:
+        - receiver: gmail
+          match:
+            severity: critical
+          continue: true
+
+        - receiver: telegram
+          match:
+            severity: critical
+
+    receivers:
+    - name: gmail
+      email_configs:
+      - to: fatherfedor13@gmail.com
+        from: alertmanager777@gmail.com
+        smarthost: smtp.gmail.com:587
+        auth_username: alertmanager777@gmail.com
+        auth_identity: alertmanager777@gmail.com
+        auth_password: secret-key
+          
+    - name: telegram
+      telegram_configs:
+        - bot_token: "6967895877:AAHdmpRxI-fMmHGr7SURkzA0niAubM8SiXQ"
+          chat_id: -4076000135

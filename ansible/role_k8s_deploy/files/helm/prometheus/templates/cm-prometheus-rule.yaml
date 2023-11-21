@@ -1,0 +1,19 @@
+apiVersion: v1
+#{{ "{{" }} - because deploying via a helm chart. It will be only 2 brackets after helm 
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+data:
+  alert.yml: |
+    groups:
+    - name: demo alert
+      rules:  
+      - alert: kube-state-metrics-down
+        expr: up{job="kube-state-metrics"} == 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          title: "kube-state-metrics is down"
+          summary: kube-state-metrics job missing (instance {{ "{{" }} $labels.instance {{ "}}" }}) VALUE = {{ "{{" }} $value {{ "}}" }} LABELS = {{ "{{" }} $labels {{ "}}" }}
+          description: "kube-state-metrics doesn't return any metrics. An exporter might be crashed."

@@ -16,28 +16,33 @@
   - name: Install Amazon Elastic Block Store (EBS) CSI driver
     shell: kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.24"
 
-  - name: Copy files to master from localhost to deploy Prometheus
+  - name: Copy files to master from localhost to deploy Prometheus and alertmanager
     copy:
-      src: helm_chart
+      src: helm
       dest: $HOME
 
   - name: Change secret-key in cm-alert.yaml for email
-    shell: sed -i "s/secret-key/$(sed '1!d' \.email\/secret-key.txt)/" helm_chart/templates/cm-alert.yaml
+    shell: sed -i "s/secret-key/$(sed '1!d' \.email\/secret-key.txt)/" helm/alertmanager/templates/cm-alert.yaml
     #need .email/secret-key.txt(02_init_master.yml)
 
-  - name: Generate values.yaml
-    template: 
-      src: values.j2
-      dest: $HOME/helm_chart/values.yaml
+  #- name: Generate values.yaml
+  #  template: 
+  #    src: values.j2
+  #    dest: $HOME/helm_chart/values.yaml
 
   - name: Run prometheus and exporters
     shell: |
-      cd helm_chart/
+      cd helm/prometheus/
       while ! helm upgrade --install -n monitoring --create-namespace prometheus .; do sleep 5; done
       helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
       helm repo update
       helm upgrade --install -n monitoring kube-state-metrics prometheus-community/kube-state-metrics
 #      kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+  - name: Run alertmanager-config
+    shell: |
+      cd helm/alertmanager/
+      helm upgrade --install -n monitoring alertmanager .
 
   - name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
     shell: |
@@ -59,11 +64,7 @@
 
 - name: Run in workers
   block:
-  - name: ff
+  - name: Reload configuration of Prometheus(if you've run terraform already and not desrtoy)
     shell: while ! curl -X POST localhost:9090/-/reload; do sleep 5; done
     #pgrep prometheus | kill -HUP
-  when: "'ansible_workers' in group_names"      
-
-          #dns_sd_configs:
-          #- names:
-          #  - 'kube-dns.kube-system.svc'
+  when: "'ansible_workers' in group_names"
