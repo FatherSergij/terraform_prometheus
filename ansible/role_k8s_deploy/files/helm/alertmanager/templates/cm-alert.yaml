@@ -3,6 +3,7 @@ kind: ConfigMap
 metadata:
   name: alertmanager-config
 data:
+#receivers have the same matches, so you need to specify continue: true option
   config.yml: |
     global:
     route:
@@ -28,9 +29,9 @@ data:
         smarthost: smtp.gmail.com:587
         auth_username: alertmanager777@gmail.com
         auth_identity: alertmanager777@gmail.com
-        auth_password: secret-key
+        auth_password: app-password
           
     - name: telegram
       telegram_configs:
-        - bot_token: "6967895877:AAHdmpRxI-fMmHGr7SURkzA0niAubM8SiXQ"
+        - bot_token: "token"
           chat_id: -4076000135

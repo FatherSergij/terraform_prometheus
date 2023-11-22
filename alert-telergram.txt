@@ -1,0 +1,13 @@
+Find @BotFather in Telegram
+Create bot - get TOKEN
+Create channel
+Add bot to channel
+Send message to channel: /my_id something
+In browser: https://api.telegram.org/TOKEN/getUpdates - find chat.id
+In ConfigMap alertmanager:
+    - name: telegram
+      telegram_configs:
+        - bot_token: "TOKEN"
+          chat_id: chat.id
+
+https://www.youtube.com/watch?v=nz5xMoY1d6c
