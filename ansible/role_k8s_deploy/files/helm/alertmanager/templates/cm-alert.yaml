@@ -33,5 +33,5 @@ data:
           
     - name: telegram
       telegram_configs:
-        - bot_token: "token"
+        - bot_token: "token-telegram"
           chat_id: -4076000135

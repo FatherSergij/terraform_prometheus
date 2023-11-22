@@ -24,7 +24,7 @@
   - name: Change app-password in cm-alert.yaml for email and token for telegram
     shell: |
       sed -i "s/app-password/$(sed '1!d' \.alert\/secret-key.txt)/" helm/alertmanager/templates/cm-alert.yaml
-      sed -i "s/token/$(sed '2!d' \.alert\/secret-key.txt)/" helm/alertmanager/templates/cm-alert.yaml
+      sed -i "s/token-telegram/$(sed '2!d' \.alert\/secret-key.txt)/" helm/alertmanager/templates/cm-alert.yaml
     #need .alert/secret-key.txt(02_init_master.yml)
 
   #- name: Generate values.yaml
