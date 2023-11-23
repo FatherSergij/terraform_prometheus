@@ -19,7 +19,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: alertmanager
-  namespace: monitoring
 spec:
   replicas: 1
   selector:
@@ -33,7 +32,7 @@ spec:
     spec:
       containers:
       - name: alertmanager
-        image: prom/alertmanager:latest
+        image: prom/alertmanager:v0.26.0
         args:
           - "--config.file=/etc/alertmanager/config.yml"
           - "--storage.path=/alertmanager"

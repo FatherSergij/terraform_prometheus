@@ -33,13 +33,13 @@ spec:
       serviceAccountName: prometheus
       containers:
       - name: prometheus-server
-        image: prom/prometheus
+        image: prom/prometheus:v2.48.0
         ports:
           - containerPort: 9090
         args: 
           - --config.file=/etc/prometheus/prometheus.yml
           - --storage.tsdb.path=/prometheus
-          - --web.enable-lifecycle
+          - --web.enable-lifecycle #for reload configuration(curl -X POST localhost:9093/-/reload)
         volumeMounts:
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/prometheus.yml

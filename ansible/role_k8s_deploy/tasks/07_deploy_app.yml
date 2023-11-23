@@ -41,10 +41,15 @@
       helm upgrade --install -n monitoring kube-state-metrics prometheus-community/kube-state-metrics
 #      kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
-  - name: Run alertmanager-config
+  - name: Run alertmanager
     shell: |
       cd helm/alertmanager/
       helm upgrade --install -n monitoring alertmanager .
+
+  - name: Run blackbox
+    shell: |
+      cd helm/blackbox/
+      helm upgrade --install -n monitoring blackbox .      
 
   - name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
     shell: |
@@ -66,7 +71,13 @@
 
 - name: Run in workers
   block:
-  - name: Reload configuration of Prometheus(if you've run terraform already and not desrtoy)
+  - name: Reload configuration of Prometheus(if you've run terraform already and not run destroy before)
     shell: while ! curl -X POST localhost:9090/-/reload; do sleep 5; done
     #pgrep prometheus | kill -HUP
+
+  - name: Reload configuration of alertmanager(if you've run terraform already and not run destroy before)
+    shell: while ! curl -X POST localhost:9093/-/reload; do sleep 5; done  
+
+  - name: Reload configuration of blackbox(if you've run terraform already and not run destroy before)
+    shell: while ! curl -X POST localhost:9115/-/reload; do sleep 5; done    
   when: "'ansible_workers' in group_names"
