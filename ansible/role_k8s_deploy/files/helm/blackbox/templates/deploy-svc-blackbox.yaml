@@ -1,9 +1,9 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: prometheus-blackbox-exporter
+  name: blackbox-exporter
   labels:
-    app: prometheus-blackbox-exporter
+    app: blackbox-exporter
 spec:
   type: ClusterIP
   ports:
@@ -11,23 +11,23 @@ spec:
       port: 9115
       protocol: TCP
   selector:
-    app: prometheus-blackbox-exporter
+    app: blackbox-exporter
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prometheus-blackbox-exporter
+  name: blackbox-exporter
   labels:
-    app: prometheus-blackbox-exporter
+    app: blackbox-exporter
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: prometheus-blackbox-exporter
+      app: blackbox-exporter
   template:
     metadata:
       labels:
-        app: prometheus-blackbox-exporter
+        app: blackbox-exporter
     spec:
       restartPolicy: Always
       containers:
@@ -54,8 +54,9 @@ spec:
 #              path: /health
 #              port: http
           volumeMounts:
-            - mountPath: /config
-              name: config
+            - name: config-volume
+              mountPath: /config
+              
 #        - name: configmap-reload
 #          image: "jimmidyson/configmap-reload:v0.2.2"
 #          imagePullPolicy: "IfNotPresent"
@@ -72,6 +73,6 @@ spec:
 #              name: config
 #              readOnly: true
       volumes:
-        - name: config
+        - name: config-volume
           configMap:
-            name: prometheus-blackbox-exporter
+            name: blackbox-config

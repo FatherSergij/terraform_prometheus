@@ -21,7 +21,7 @@
       src: helm
       dest: $HOME
 
-  - name: Change app-password in cm-alert.yaml for email and token for telegram
+  - name: Change app-password in cm-alert.yaml for email and token for Telegram
     shell: |
       sed -i "s/app-password/$(sed '1!d' \.alert\/secret-key.txt)/" helm/alertmanager/templates/cm-alert.yaml
       sed -i "s/token-telegram/$(sed '2!d' \.alert\/secret-key.txt)/" helm/alertmanager/templates/cm-alert.yaml
@@ -32,7 +32,7 @@
   #    src: values.j2
   #    dest: $HOME/helm_chart/values.yaml
 
-  - name: Run prometheus and exporters
+  - name: Run Prometheus and exporters
     shell: |
       cd helm/prometheus/
       while ! helm upgrade --install -n monitoring --create-namespace prometheus .; do sleep 5; done
@@ -41,12 +41,12 @@
       helm upgrade --install -n monitoring kube-state-metrics prometheus-community/kube-state-metrics
 #      kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
-  - name: Run alertmanager
+  - name: Run Alertmanager
     shell: |
       cd helm/alertmanager/
       helm upgrade --install -n monitoring alertmanager .
 
-  - name: Run blackbox
+  - name: Run Blackbox
     shell: |
       cd helm/blackbox/
       helm upgrade --install -n monitoring blackbox .      
@@ -61,6 +61,7 @@
     #id=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region eu-north-1)
     #device=$(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].Device' --output text --region eu-north-1)
     #aws ec2 modify-instance-attribute --instance-id $id --block-device-mappings "[{\"DeviceName\": \"$device\",\"Ebs\":{\"DeleteOnTermination\":true}}]" --region eu-north-1
+    #aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --region eu-north-1
 
   - name: Approve CSRs(to see 04_cert_kudeadm.yml)
     shell: for csr_name in $(kubectl get csr | grep -i pending | awk '{print $1}'); do kubectl certificate approve $csr_name; done
@@ -72,12 +73,23 @@
 - name: Run in workers
   block:
   - name: Reload configuration of Prometheus(if you've run terraform already and not run destroy before)
-    shell: while ! curl -X POST localhost:9090/-/reload; do sleep 5; done
-    #pgrep prometheus | kill -HUP
+    shell: for (( i=1; i<=5; i++)); do curl -X POST localhost:9090/-/reload; if [ $? == 0 ]; then break; fi; sleep 10; done
+    args:
+      executable: /usr/bin/bash
+    ignore_errors: true
 
-  - name: Reload configuration of alertmanager(if you've run terraform already and not run destroy before)
-    shell: while ! curl -X POST localhost:9093/-/reload; do sleep 5; done  
+  - name: Reload configuration of Alertmanager(if you've run terraform already and not run destroy before)
+    shell: for (( i=1; i<=5; i++)); do pgrep alertmanager | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
+    args:
+      executable: /usr/bin/bash    
+    ignore_errors: true
 
-  - name: Reload configuration of blackbox(if you've run terraform already and not run destroy before)
-    shell: while ! curl -X POST localhost:9115/-/reload; do sleep 5; done    
+  - name: Reload configuration of Blackbox(if you've run terraform already and not run destroy before)
+    shell: for (( i=1; i<=5; i++)); do pgrep blackbox | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
+    args:
+      executable: /usr/bin/bash    
+    #do 5 time with delay 10 seconds - wait to pod deploy
+    #if [ $? == 0 ] - if command didn't work successfully and pass 50 seconds this worker doesn't have this pod
+    #executable: /usr/bin/bash - default - /bin/sh - "for (( ))" doesn't work
+    ignore_errors: true   
   when: "'ansible_workers' in group_names"
