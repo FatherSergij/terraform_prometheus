@@ -49,7 +49,12 @@
   - name: Run Blackbox
     shell: |
       cd helm/blackbox/
-      helm upgrade --install -n monitoring blackbox .      
+      helm upgrade --install -n monitoring blackbox .
+
+  - name: Run Grafana
+    shell: |
+      cd helm/grafana/
+      helm upgrade --install -n monitoring --create-namespace grafana .
 
   - name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
     shell: |

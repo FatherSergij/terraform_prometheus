@@ -32,7 +32,7 @@ variable "port" {
 }
 
 variable "numbers_instans_workers_deploy" {
-  default = 1
+  default = 2
 }
 
 variable "instance_type_master_deploy" {
@@ -61,6 +61,6 @@ variable "aws_user_id" {
   default = 728490037630
 }
 
-variable "number_replicas" {
+variable "number_replicas_web" {
   default = 2
 }

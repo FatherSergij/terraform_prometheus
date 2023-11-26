@@ -64,7 +64,7 @@ resource "null_resource" "instance_deploy" {
   }
 
   provisioner "local-exec" {
-    command = "cd ansible/ && ansible-playbook -e 'region_from_terraform'=${var.region} -e 'domain_from_terraform'=${var.domain} -e 'aws_user_id_from_terraform'=${var.aws_user_id} -e 'number_replicas_from_terraform'=${var.number_replicas} main.yml"
+    command = "cd ansible/ && ansible-playbook -e 'region_from_terraform'=${var.region} -e 'domain_from_terraform'=${var.domain} -e 'aws_user_id_from_terraform'=${var.aws_user_id} -e 'number_replicas_from_terraform'=${var.number_replicas_web} main.yml"
   } 
 }
 
