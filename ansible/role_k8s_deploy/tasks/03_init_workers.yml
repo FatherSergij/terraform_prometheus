@@ -23,10 +23,16 @@
         src: config
         dest: $HOME/.kube/config
 
+    - name: Add name to workers
+      shell: inventory_hostname
+
     - name: Need run before join workers
       shell: yes | sudo kubeadm reset
 
     - name: Init workers(role_path - system variable)
-      script: "{{ role_path }}/files/join_for_workers.sh"       
+      script: "{{ role_path }}/files/join_for_workers.sh"  
+
+    - name: Add Taints to workers   
+
     when: rc_k8s.rc == 1  
   when: "'ansible_workers' in group_names"

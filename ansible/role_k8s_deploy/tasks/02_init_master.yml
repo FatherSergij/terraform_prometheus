@@ -20,9 +20,9 @@
   - name: Init k8s if cluster not init
     block:
     - name: Initialization cluster k8s on master and extract 2 last line for join workers
-      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/crio/crio.sock | tail -2
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///var/run/crio/crio.sock --node-name {{ inventory_hostname }}| tail -2
       register: result
-    
+
     - name: Create config for kubelet
       #if run with become: true(in ansible.cfg) then %HOME will be /root
       become: false
