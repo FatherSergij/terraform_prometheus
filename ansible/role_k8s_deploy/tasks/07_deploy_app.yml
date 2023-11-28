@@ -1,6 +1,9 @@
 ---
 - name: Deploy web page(run in master)
   block:
+  - name: Add Taints to worker01(Prometheus and Grafana run on worker01)
+    shell: kubectl taint nodes worker01 run=promgraf:NoSchedule
+
   - name: Create secret for Amazon Elastic Block Store (EBS) CSI driver
     shell: |
       kubectl delete secret aws-secret --namespace kube-system
@@ -57,6 +60,7 @@
       helm upgrade --install -n monitoring --create-namespace grafana .
 
   - name: Set DeleteOnTermination in "true" on volume created of Prometheus to be one will delete when we run command terraform destroy
+    #if this command doesn't run you need to delete the volume in AWS manually
     shell: |
       while ! aws ec2 modify-instance-attribute --instance-id \
         $(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query 'Volumes[0].Attachments[0].InstanceId' --output text --region {{ region_from_terraform }}) \
@@ -70,7 +74,6 @@
 
   - name: Approve CSRs(to see 04_cert_kudeadm.yml)
     shell: for csr_name in $(kubectl get csr | grep -i pending | awk '{print $1}'); do kubectl certificate approve $csr_name; done
-
   become: false
   #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
   when: "'ansible_master' in group_names" 

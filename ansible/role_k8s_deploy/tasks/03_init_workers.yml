@@ -11,28 +11,32 @@
   - name: Init worker if one not init
     block:
     - name: Create directory
-      become: false
       file:
         path: $HOME/.kube/
         state: directory
         mode: '0755'
 
     - name: Copy config to workers from localhost for workers 
-      become: false
       copy:
         src: config
         dest: $HOME/.kube/config
 
-    - name: Add name to workers
-      shell: inventory_hostname
+    - name: Copy config to workers from localhost for workers 
+      copy:
+        src: "{{ role_path }}/files/join_for_workers.sh"
+        dest: $HOME/join_for_workers.sh
+        mode: '0775'
+
+    - name: Add name of workers at the end of last line of init workers's file
+      shell: sed -i "$ s/$/ --node-name {{ inventory_hostname }}/" join_for_workers.sh
 
     - name: Need run before join workers
+      #become: true
       shell: yes | sudo kubeadm reset
 
     - name: Init workers(role_path - system variable)
-      script: "{{ role_path }}/files/join_for_workers.sh"  
-
-    - name: Add Taints to workers   
-
+      become: true
+      shell: ./join_for_workers.sh
+    become: false
     when: rc_k8s.rc == 1  
   when: "'ansible_workers' in group_names"
