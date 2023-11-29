@@ -74,11 +74,11 @@ spec:
               mountPath: /etc/grafana/provisioning/dashboards
             - name: grafana-dashboards
               mountPath: /var/lib/grafana/dashboards 
-      tolerations:
-      - key: "run"
-        operator: "Equal"
-        value: "promgraf"
-        effect: "NoSchedule"                             
+      #tolerations:
+      #- key: "run"
+      #  operator: "Equal"
+      #  value: "promgraf"
+      #  effect: "NoSchedule"                             
       volumes:
         - name: grafana-storage
           emptyDir: {}

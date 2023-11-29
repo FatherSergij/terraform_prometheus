@@ -1,8 +1,8 @@
 ---
 - name: Deploy web page(run in master)
   block:
-  - name: Add Taints to worker01(Prometheus and Grafana run on worker01)
-    shell: kubectl taint nodes worker01 run=promgraf:NoSchedule
+  #- name: Add Taints to worker01(Prometheus and Grafana run on worker01)
+  #  shell: kubectl taint nodes worker01 run=promgraf:NoSchedule
 
   - name: Create secret for Amazon Elastic Block Store (EBS) CSI driver
     shell: |
@@ -19,7 +19,7 @@
   - name: Install Amazon Elastic Block Store (EBS) CSI driver
     shell: kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.24"
 
-  - name: Copy files to master from localhost to deploy Prometheus and alertmanager
+  - name: Copy files to master from localhost to deploy Prometheus and Alertmanager
     copy:
       src: helm
       dest: $HOME
@@ -87,13 +87,13 @@
     ignore_errors: true
 
   - name: Reload configuration of Alertmanager(if you've run terraform already and not run destroy before)
-    shell: for (( i=1; i<=5; i++)); do pgrep alertmanager | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
+    shell: for (( i=1; i<=3; i++)); do pgrep alertmanager | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
     args:
       executable: /usr/bin/bash    
     ignore_errors: true
 
   - name: Reload configuration of Blackbox(if you've run terraform already and not run destroy before)
-    shell: for (( i=1; i<=5; i++)); do pgrep blackbox | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
+    shell: for (( i=1; i<=3; i++)); do pgrep blackbox | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
     args:
       executable: /usr/bin/bash    
     #do 5 time with delay 10 seconds - wait to pod deploy
@@ -101,3 +101,33 @@
     #executable: /usr/bin/bash - default - /bin/sh - "for (( ))" doesn't work
     ignore_errors: true   
   when: "'ansible_workers' in group_names"
+
+- name: Run in master
+  block:
+  - name: Copy files to master from localhost to get ip address of workers
+    copy:
+      src: ../hosts
+      dest: $HOME
+
+  - name: Get ip addresses of workers where running Prometheus 
+    shell: |
+      name_worker=$(kubectl get po $(kubectl get po -A | grep prometheus | awk '{print $2}') -n monitoring -o jsonpath='{.spec.nodeName}')
+      sed -n 's/^'"$name_worker"'.*=//p' hosts
+    register: prometheus_ip
+
+  - name: Get ip addresses of workers where running Grafana
+    shell: |
+      name_worker=$(kubectl get po $(kubectl get po -A | grep grafana | awk '{print $2}') -n monitoring -o jsonpath='{.spec.nodeName}')
+      sed -n 's/^'"$name_worker"'.*=//p' hosts
+    register: grafana_ip
+
+  - name: Output ip address of Prometheus
+    debug:
+      msg: Prometheus's address is {{ prometheus_ip.stdout }}:9090
+
+  - name: Output ip address of Grafana
+    debug:
+      msg: Grafana's address is {{ grafana_ip.stdout }}:32000
+  become: false
+  #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
+  when: "'ansible_master' in group_names"       

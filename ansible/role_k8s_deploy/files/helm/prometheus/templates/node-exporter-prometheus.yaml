@@ -40,7 +40,7 @@ spec:
               cpu: 0.15
           securityContext:
             privileged: true
-          image: prom/node-exporter
+          image: prom/node-exporter:v1.7.0
           args:
             - --path.procfs
             - /host/proc

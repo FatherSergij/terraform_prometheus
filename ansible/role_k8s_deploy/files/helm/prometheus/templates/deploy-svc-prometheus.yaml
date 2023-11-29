@@ -48,11 +48,11 @@ spec:
             mountPath: /etc/prometheus/rules
           - name: prometheus-data
             mountPath: /prometheus
-      tolerations:
-      - key: "run"
-        operator: "Equal"
-        value: "promgraf"
-        effect: "NoSchedule"      
+      #tolerations:
+      #- key: "run"
+      #  operator: "Equal"
+      #  value: "promgraf"
+      #  effect: "NoSchedule"      
       initContainers: #without this there will be error - prometheus panic: Unable to create mmap-ed active query log and pod didn't create
         - name: prometheus-data-permission-fix
           image: busybox
