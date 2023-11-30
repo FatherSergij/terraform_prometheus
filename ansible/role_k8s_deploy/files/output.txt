@@ -1,0 +1,7 @@
+
+
+Additional volume created for Prometheus. If Terraform's commands "apply or "destroy" finish incorrect this volume need to delete manually.
+Volume ID - volume_id
+
+Prometheus's address is prometheus_addr:9090
+Grafana's address is grafana_addr:32000

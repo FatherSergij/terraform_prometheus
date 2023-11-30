@@ -73,7 +73,8 @@ spec:
             - name: grafana-provisioning-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
             - name: grafana-dashboards
-              mountPath: /var/lib/grafana/dashboards 
+              mountPath: /usr/share/grafana/public/dashboards/
+              #mountPath: /var/lib/grafana/dashboards 
       #tolerations:
       #- key: "run"
       #  operator: "Equal"

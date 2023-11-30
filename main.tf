@@ -68,6 +68,16 @@ resource "null_resource" "instance_deploy" {
   } 
 }
 
+resource "null_resource" "output_adresses" {
+  depends_on = [null_resource.instance_deploy]
+  triggers = {
+    timestamp = timestamp() //for ansible-playbook to to run always
+  }  
+  provisioner "local-exec" {
+    command = "cat ansible/output.txt"
+  }
+}
+
 #resource "null_resource" "destroy" {
 #  depends_on = [module.deploy_instances]
 #  triggers = {

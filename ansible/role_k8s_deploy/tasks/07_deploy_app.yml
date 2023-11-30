@@ -74,6 +74,57 @@
 
   - name: Approve CSRs(to see 04_cert_kudeadm.yml)
     shell: for csr_name in $(kubectl get csr | grep -i pending | awk '{print $1}'); do kubectl certificate approve $csr_name; done
+
+  - name: Get ip addresses of workers where running Prometheus and volume ID created of Prometheus
+    shell: |
+      echo $(aws ec2 describe-volumes --filters Name=tag:pv,Values=prometheus --query "Volumes[0].VolumeId" --output text --region {{ region_from_terraform }}) > name_worker.txt
+      echo $(kubectl get po $(kubectl get po -A | grep prometheus | awk '{print $2}') -n monitoring -o jsonpath='{.spec.nodeName}') >> name_worker.txt
+      echo $(kubectl get po $(kubectl get po -A | grep grafana | awk '{print $2}') -n monitoring -o jsonpath='{.spec.nodeName}') >> name_worker.txt
+
+  - name: Copy name_worker.txt from master to localhost
+    become: false
+    fetch:
+      src: $HOME/name_worker.txt
+      dest: name_worker.txt
+      flat: yes 
+
+  - name: Create output file
+    shell: |
+      cp {{ role_path }}/files/output.txt output.txt
+      sed -i "s/volume_id/$(sed '1!d' name_worker.txt)/" output.txt
+      prom=$(sed -n 's/^'"$(sed '2!d' name_worker.txt)"'.*=//p' hosts)
+      sed -i "s/prometheus_addr/$prom/" output.txt
+      graf=$(sed -n 's/^'"$(sed '3!d' name_worker.txt)"'.*=//p' hosts)
+      sed -i "s/grafana_addr/$graf/" output.txt
+    delegate_to: localhost
+  #- name: Copy files to master from localhost to get ip address of workers
+  #  copy:
+  #    src: ../hosts
+  #    dest: $HOME
+#
+  #- name: Get ip addresses of workers where running Prometheus 
+  #  shell: |
+  #    name_worker=$(kubectl get po $(kubectl get po -A | grep prometheus | awk '{print $2}') -n monitoring -o jsonpath='{.spec.nodeName}')
+  #    sed -n 's/^'"$name_worker"'.*=//p' hosts
+  #  register: prometheus_ip
+#
+  #- name: Get ip addresses of workers where running Grafana
+  #  shell: |
+  #    name_worker=$(kubectl get po $(kubectl get po -A | grep grafana | awk '{print $2}') -n monitoring -o jsonpath='{.spec.nodeName}')
+  #    sed -n 's/^'"$name_worker"'.*=//p' hosts
+  #  register: grafana_ip
+#
+  #- name: Output to file ip addresses of Prometheus and Grafana
+  #  shell: |
+  #    echo "Prometheus's address is "{{ prometheus_ip.stdout }}":9090" > address.txt
+  #    echo "Grafana's address is "{{ grafana_ip.stdout }}":32000" >> address.txt
+#
+  #- name: Copy address.txt from master to localhost for terraform
+  #  become: false
+  #  fetch:
+  #    src: $HOME/address.txt
+  #    dest: address.txt
+  #    flat: yes    
   become: false
   #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
   when: "'ansible_master' in group_names" 
@@ -87,13 +138,13 @@
     ignore_errors: true
 
   - name: Reload configuration of Alertmanager(if you've run terraform already and not run destroy before)
-    shell: for (( i=1; i<=3; i++)); do pgrep alertmanager | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
+    shell: for (( i=1; i<=2; i++)); do pgrep alertmanager | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
     args:
       executable: /usr/bin/bash    
     ignore_errors: true
 
   - name: Reload configuration of Blackbox(if you've run terraform already and not run destroy before)
-    shell: for (( i=1; i<=3; i++)); do pgrep blackbox | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
+    shell: for (( i=1; i<=2; i++)); do pgrep blackbox | sudo xargs kill -HUP; if [ $? == 0 ]; then break; fi; sleep 10; done
     args:
       executable: /usr/bin/bash    
     #do 5 time with delay 10 seconds - wait to pod deploy
@@ -101,33 +152,3 @@
     #executable: /usr/bin/bash - default - /bin/sh - "for (( ))" doesn't work
     ignore_errors: true   
   when: "'ansible_workers' in group_names"
-
-- name: Run in master
-  block:
-  - name: Copy files to master from localhost to get ip address of workers
-    copy:
-      src: ../hosts
-      dest: $HOME
-
-  - name: Get ip addresses of workers where running Prometheus 
-    shell: |
-      name_worker=$(kubectl get po $(kubectl get po -A | grep prometheus | awk '{print $2}') -n monitoring -o jsonpath='{.spec.nodeName}')
-      sed -n 's/^'"$name_worker"'.*=//p' hosts
-    register: prometheus_ip
-
-  - name: Get ip addresses of workers where running Grafana
-    shell: |
-      name_worker=$(kubectl get po $(kubectl get po -A | grep grafana | awk '{print $2}') -n monitoring -o jsonpath='{.spec.nodeName}')
-      sed -n 's/^'"$name_worker"'.*=//p' hosts
-    register: grafana_ip
-
-  - name: Output ip address of Prometheus
-    debug:
-      msg: Prometheus's address is {{ prometheus_ip.stdout }}:9090
-
-  - name: Output ip address of Grafana
-    debug:
-      msg: Grafana's address is {{ grafana_ip.stdout }}:32000
-  become: false
-  #if run with become: true(in ansible.cfg) then %HOME will be /root and all run will be as root  
-  when: "'ansible_master' in group_names"       

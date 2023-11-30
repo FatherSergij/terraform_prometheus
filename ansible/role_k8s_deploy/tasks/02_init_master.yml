@@ -50,7 +50,7 @@
         content: "{{ result.stdout }}"
         dest: "{{ role_path }}/files/join_for_workers.sh" #role_path - system variable
         mode: '0775'
-      delegate_to: localhost            
+      delegate_to: localhost
     when: rc_k8s.rc == 0
 
   - name: Copy config from master to localhost for workers
