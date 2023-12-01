@@ -10,7 +10,7 @@ spec:
       nodePort: 32000
   selector:
     app: grafana
-  sessionAffinity: None
+  #sessionAffinity: None
   type: NodePort
 ---
 apiVersion: apps/v1
